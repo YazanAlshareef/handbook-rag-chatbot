@@ -23,7 +23,7 @@ export function providerName(): ProviderName {
 // fixture: calibrated on eval/questions.jsonl (see README).
 // gemini: a starting guess, NOT calibrated (no live key was available).
 const DEFAULT_MIN_SCORE: Record<ProviderName, number> = {
-  fixture: 0.2,
+  fixture: 0.3,
   gemini: 0.6,
 };
 

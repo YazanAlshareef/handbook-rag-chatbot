@@ -16,6 +16,7 @@ export type Answer = {
   answer: string;
   refused: boolean;
   citations: Citation[];
+  retrieved: Citation[]; // everything retrieval returned, cited or not (eval and debugging)
   topScore: number;
   provider: ProviderName;
 };
@@ -33,10 +34,7 @@ export async function ask(
   const [qv] = await provider.embed([question], "query");
   const hits = search(db, qv, TOP_K);
   const topScore = hits[0]?.score ?? 0;
-  const base = { topScore, provider: provider.name };
-  if (topScore < threshold) return { ...base, answer: REFUSAL, refused: true, citations: [] };
-
-  const cites: Citation[] = hits.map((h, i) => ({
+  const retrieved: Citation[] = hits.map((h, i) => ({
     n: i + 1,
     docId: h.docId,
     docTitle: h.docTitle,
@@ -44,6 +42,10 @@ export async function ask(
     text: h.text,
     score: h.score,
   }));
+  const base = { topScore, provider: provider.name, retrieved };
+  if (topScore < threshold) return { ...base, answer: REFUSAL, refused: true, citations: [] };
+
+  const cites = retrieved;
   const text = await provider.answer(
     question,
     cites.map((c) => ({ n: c.n, label: `${c.docTitle} > ${c.section}`, text: c.text })),
