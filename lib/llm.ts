@@ -4,7 +4,10 @@
 import { GoogleGenAI } from "@google/genai";
 import { REFUSAL, providerName, type ProviderName } from "./config";
 
-export type Passage = { n: number; label: string; text: string };
+// a hung call must not hold a request open; withRetry retries a timed-out call up to 3 times
+const REQUEST_TIMEOUT_MS = 20_000;
+
+export type Passage ={ n: number; label: string; text: string };
 
 export interface Provider {
   name: ProviderName;
@@ -32,7 +35,7 @@ Rules:
 function geminiProvider(): Provider {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error("GEMINI_API_KEY is not set (put it in .env.local)");
-  const ai = new GoogleGenAI({ apiKey: key });
+  const ai = new GoogleGenAI({ apiKey: key, httpOptions: { timeout: REQUEST_TIMEOUT_MS } });
   const embedModel = process.env.GEMINI_EMBED_MODEL || "gemini-embedding-001";
   const chatModel = process.env.GEMINI_CHAT_MODEL || "gemini-2.5-flash";
 
