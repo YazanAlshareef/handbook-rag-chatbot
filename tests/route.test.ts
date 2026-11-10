@@ -42,3 +42,23 @@ test("rate limit returns 429 with Retry-After after the per-minute cap", async (
   assert.equal(last!.status, 429);
   assert.ok(Number(last!.headers.get("retry-after")) >= 1);
 });
+
+test("rejects a chunked body over the limit even with no content-length", async () => {
+  const big = new TextEncoder().encode(q("a".repeat(5000)));
+  const body = new ReadableStream({
+    start(c) {
+      c.enqueue(big.slice(0, 2500));
+      c.enqueue(big.slice(2500));
+      c.close();
+    },
+  });
+  const res = await POST(
+    new Request("http://localhost/api/ask", {
+      method: "POST",
+      headers: { "x-forwarded-for": "198.51.100.77" },
+      body,
+      duplex: "half",
+    } as RequestInit),
+  );
+  assert.equal(res.status, 413);
+});

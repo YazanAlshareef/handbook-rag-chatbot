@@ -1,9 +1,28 @@
-import { MAX_BODY_BYTES, MAX_QUESTION_CHARS, MIN_QUESTION_CHARS, rateLimitPerMinute } from "@/lib/config";
+import { MAX_BODY_BYTES, dailyLimit, MAX_QUESTION_CHARS, MIN_QUESTION_CHARS, rateLimitPerMinute } from "@/lib/config";
 import { ask, getEngine } from "@/lib/rag";
-import { clientKey, rateLimit } from "@/lib/ratelimit";
+import { clientKey, dailyCap, rateLimit } from "@/lib/ratelimit";
 
 const json = (body: unknown, status = 200, headers: Record<string, string> = {}) =>
   Response.json(body, { status, headers: { "Cache-Control": "no-store", ...headers } });
+
+// reads the body but stops as soon as it passes the cap, so a chunked upload cannot fill memory
+async function readCapped(req: Request, max: number): Promise<string | null> {
+  if (!req.body) return "";
+  const reader = req.body.getReader();
+  const parts: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.length;
+    if (total > max) {
+      await reader.cancel();
+      return null;
+    }
+    parts.push(value);
+  }
+  return Buffer.concat(parts).toString("utf8");
+}
 
 export async function POST(req: Request) {
   const limit = rateLimit(clientKey(req), rateLimitPerMinute());
@@ -12,11 +31,13 @@ export async function POST(req: Request) {
       "Retry-After": String(limit.retryAfterSec),
     });
 
-  // reject oversized bodies before parsing them
+  if (!dailyCap(dailyLimit())) return json({ error: "Daily question limit reached. Try again tomorrow." }, 429, { "Retry-After": "3600" });
+
+  // reject oversized bodies: check the declared size, then count bytes while reading
   const declared = Number(req.headers.get("content-length") ?? 0);
   if (declared > MAX_BODY_BYTES) return json({ error: "Request too large." }, 413);
-  const raw = await req.text();
-  if (new TextEncoder().encode(raw).length > MAX_BODY_BYTES) return json({ error: "Request too large." }, 413);
+  const raw = await readCapped(req, MAX_BODY_BYTES);
+  if (raw === null) return json({ error: "Request too large." }, 413);
 
   let question: unknown;
   try {
