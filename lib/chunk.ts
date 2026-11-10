@@ -15,7 +15,7 @@ export function parseDoc(id: string, raw: string): Doc {
   const fm = text.match(/^---\n([\s\S]*?)\n---\n/);
   if (fm) {
     const t = fm[1].match(/^title:\s*(.+)$/m);
-    if (t) title = t[1].trim().replace(/^["']|["']$/g, "");
+    if (t) title = t[1].trim().replace(/^["']|["']$/g, "").replace(/&amp;/g, "&");
     text = text.slice(fm[0].length);
   }
   text = text
