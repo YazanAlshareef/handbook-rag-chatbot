@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { chunkDoc, parseDoc } from "../lib/chunk";
-import { CHUNK_MAX_CHARS, MIN_CHUNK_CHARS } from "../lib/config";
+import { CHUNK_MAX_CHARS, CHUNK_OVERLAP_CHARS, MIN_CHUNK_CHARS } from "../lib/config";
 
 const RAW = `---
 title: Sample &amp; Test
@@ -44,4 +44,14 @@ test("a long section is split and neighbouring chunks overlap", () => {
   assert.ok(chunks.length > 1);
   const tail = chunks[0].text.slice(-60);
   assert.ok(chunks[1].text.includes(tail.trim().slice(-30)), "second chunk should repeat the end of the first");
+});
+
+test("a long piece with no sentence ends is split, not truncated", () => {
+  const words = Array.from({ length: 600 }, (_, i) => `word${i}`);
+  const doc = parseDoc("long", `# Long\n\n${words.join(" ")}`);
+  const chunks = chunkDoc(doc);
+  assert.ok(chunks.length > 1);
+  const seen = new Set(chunks.flatMap((c) => c.text.split(/\s+/)));
+  for (const w of words) assert.ok(seen.has(w), `${w} lost`);
+  for (const c of chunks) assert.ok(c.text.length <= CHUNK_MAX_CHARS + CHUNK_OVERLAP_CHARS + 2);
 });
