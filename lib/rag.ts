@@ -25,6 +25,11 @@ export function indexPath(name: ProviderName): string {
   return path.join(process.cwd(), "data", `index.${name}.db`);
 }
 
+export function citedPassages(text: string, passages: Citation[]): Citation[] {
+  const used = new Set([...text.matchAll(/\[(\d+)\]/g)].map((m) => Number(m[1])));
+  return passages.filter((c) => used.has(c.n));
+}
+
 export async function ask(
   question: string,
   provider: Provider,
@@ -52,10 +57,11 @@ export async function ask(
   );
   if (!text || text.includes(REFUSAL)) return { ...base, answer: REFUSAL, refused: true, citations: [] };
 
-  // keep only passages the answer actually cites; if it cited none, show all it was given
-  const used = new Set([...text.matchAll(/\[(\d+)\]/g)].map((m) => Number(m[1])));
-  const cited = cites.filter((c) => used.has(c.n));
-  return { ...base, answer: text, refused: false, citations: cited.length ? cited : cites };
+  // keep only passages the answer cites with a valid [n]; an answer with no valid marker is
+  // uncheckable, so it is refused rather than shown with passages it never pointed to
+  const cited = citedPassages(text, cites);
+  if (!cited.length) return { ...base, answer: REFUSAL, refused: true, citations: [] };
+  return { ...base, answer: text, refused: false, citations: cited };
 }
 
 // One provider + one open index per server process.

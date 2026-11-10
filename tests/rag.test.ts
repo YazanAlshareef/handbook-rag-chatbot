@@ -5,7 +5,7 @@ import path from "node:path";
 import { test } from "node:test";
 import { REFUSAL } from "../lib/config";
 import { getProvider } from "../lib/llm";
-import { ask, indexPath } from "../lib/rag";
+import { ask, citedPassages, indexPath } from "../lib/rag";
 import { openStore } from "../lib/store";
 
 // These use the committed fixture index, so no key or network is needed.
@@ -36,4 +36,11 @@ test("openStore fails on a missing index instead of creating an empty one", () =
   const missing = path.join(os.tmpdir(), `nope-${Date.now()}.db`);
   assert.throws(() => openStore(missing));
   assert.equal(fs.existsSync(missing), false);
+});
+
+test("citedPassages keeps only passages with a valid [n] marker", () => {
+  const c = (n: number) => ({ n, docId: "d", docTitle: "t", section: "s", text: "x", score: 1 });
+  const all = [c(1), c(2), c(3)];
+  assert.deepEqual(citedPassages("Yes [2] and [9].", all).map((p) => p.n), [2]);
+  assert.deepEqual(citedPassages("No markers here.", all), []);
 });
