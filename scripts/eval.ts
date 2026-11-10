@@ -29,7 +29,8 @@ async function main() {
     .map((l) => JSON.parse(l));
   const { provider, db } = getEngine();
 
-  const rows = [];
+  type Row = { q: Q; r: Awaited<ReturnType<typeof ask>>; refused: boolean; sourceOk: boolean; retrievedOk: boolean; correct: boolean };
+  const rows: Row[] = [];
   for (const q of qs) {
     // threshold 0 so every top score is recorded; the real decision is re-applied below
     const r = await ask(q.question, provider, db, 0);
@@ -43,7 +44,7 @@ async function main() {
     rows.push({ q, r, refused, sourceOk, retrievedOk, correct });
   }
 
-  const report = (label: string, set: typeof rows) => {
+  const report = (label: string, set: Row[]) => {
     const should = set.filter((x) => x.q.expect === "answer");
     const shouldNot = set.filter((x) => x.q.expect === "refuse");
     console.log(`${label}: should answer ${should.length}`);
