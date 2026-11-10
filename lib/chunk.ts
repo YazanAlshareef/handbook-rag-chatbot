@@ -60,8 +60,21 @@ function pieces(body: string): string[] {
     const para = p.trim();
     if (!para) continue;
     if (para.length <= CHUNK_MAX_CHARS) out.push(para);
-    else out.push(...para.split(/(?<=[.!?])\s+/));
+    else for (const s of para.split(/(?<=[.!?])\s+/)) out.push(...cutAtWords(s));
   }
+  return out;
+}
+
+// a sentence longer than the limit (no sentence ends, long URL list) is split at spaces, never truncated
+function cutAtWords(s: string): string[] {
+  const out: string[] = [];
+  while (s.length > CHUNK_MAX_CHARS) {
+    let at = s.lastIndexOf(" ", CHUNK_MAX_CHARS);
+    if (at <= 0) at = CHUNK_MAX_CHARS;
+    out.push(s.slice(0, at).trim());
+    s = s.slice(at).trim();
+  }
+  if (s) out.push(s);
   return out;
 }
 
@@ -89,11 +102,6 @@ export function chunkDoc(doc: Doc): Chunk[] {
         carried = true;
       }
       cur = cur ? `${cur}\n\n${piece}` : piece;
-      if (cur.length > CHUNK_MAX_CHARS * 1.5) {
-        // a single huge piece (no sentence ends): hard cut
-        cur = cur.slice(0, CHUNK_MAX_CHARS * 1.5);
-        emit();
-      }
     }
     // do not emit a chunk that is only the carried-over overlap
     const onlyOverlap = carried && cur.length <= CHUNK_OVERLAP_CHARS && chunks.length > 0 && chunks[chunks.length - 1].text.endsWith(cur.trim());
