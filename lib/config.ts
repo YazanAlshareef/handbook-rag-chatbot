@@ -36,6 +36,12 @@ export function minScore(name: ProviderName): number {
   return DEFAULT_MIN_SCORE[name];
 }
 
+// total questions per 24 h across all callers, a spend guard for the model key
+export function dailyLimit(): number {
+  const n = Number(process.env.RATE_LIMIT_PER_DAY);
+  return Number.isInteger(n) && n > 0 ? n : 500;
+}
+
 export function rateLimitPerMinute(): number {
   const n = Number(process.env.RATE_LIMIT_PER_MINUTE);
   return Number.isInteger(n) && n > 0 ? n : 10;

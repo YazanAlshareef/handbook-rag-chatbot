@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { rateLimit } from "../lib/ratelimit";
+import { dailyCap, rateLimit } from "../lib/ratelimit";
 
 test("allows up to the limit, then blocks with a Retry-After", () => {
   const t0 = 1_000_000;
@@ -21,4 +21,12 @@ test("keys are counted separately", () => {
   const t0 = 3_000_000;
   rateLimit("c", 1, t0);
   assert.equal(rateLimit("d", 1, t0).ok, true);
+});
+
+test("daily cap counts everyone together and resets after 24 hours", () => {
+  const t0 = 9_000_000_000;
+  assert.equal(dailyCap(2, t0), true);
+  assert.equal(dailyCap(2, t0 + 1), true);
+  assert.equal(dailyCap(2, t0 + 2), false);
+  assert.equal(dailyCap(2, t0 + 86_400_001), true);
 });

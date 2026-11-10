@@ -18,8 +18,21 @@ export function rateLimit(key: string, limit: number, now = Date.now()): { ok: b
   return { ok: true, retryAfterSec: 0 };
 }
 
+// One counter for everyone, so a caller who rotates x-forwarded-for still hits a ceiling.
+// shortcut: per server instance and reset on restart; use a shared store for a hard daily cap.
+const DAY_MS = 86_400_000;
+let day = { start: 0, count: 0 };
+
+export function dailyCap(limit: number, now = Date.now()): boolean {
+  if (now - day.start >= DAY_MS) day = { start: now, count: 0 };
+  if (day.count >= limit) return false;
+  day.count++;
+  return true;
+}
+
 export function clientKey(req: Request): string {
-  // shortcut: x-forwarded-for is only trustworthy behind a proxy that sets it (Vercel does)
+  // Caveat: x-forwarded-for is client-supplied unless a proxy overwrites it (Vercel does). Without
+  // one, anyone can send a new value per request and dodge the per-IP limit; dailyCap still applies.
   const xff = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
   return xff || req.headers.get("x-real-ip") || "unknown";
 }
