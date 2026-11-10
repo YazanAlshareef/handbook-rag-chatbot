@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+:root {
+  --paper: #f4efe4;
+  --paper-2: #ebe4d3;
+  --ink: #1d1b16;
+  --ink-soft: #5c564a;
+  --rule: #cfc6b0;
+  --accent: #b8321a; /* vermilion */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #16140f;
+    --paper-2: #1f1c15;
+    --ink: #ece5d3;
+    --ink-soft: #a39b88;
+    --rule: #3a3629;
+    --accent: #ee6a4d;
+  }
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-ink: var(--ink);
+  --color-soft: var(--ink-soft);
+  --color-rule: var(--rule);
+  --color-accent: var(--accent);
+  --font-serif: var(--font-serif), Georgia, serif;
+  --font-mono: var(--font-mono), ui-monospace, monospace;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-serif), Georgia, serif;
+}
+
+/* visible focus everywhere, keyboard-first */
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
