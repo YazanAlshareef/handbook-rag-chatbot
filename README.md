@@ -63,7 +63,7 @@ The corpus is 12 pages of the [GSA-TTS handbook](https://github.com/GSA-TTS/hand
 4. Run `npm run dev`.
 5. Run `npm run eval` and read the threshold sweep at the end. Set `RAG_MIN_SCORE` from that, not from my default of 0.6. The sweep uses only the 10 questions marked `"split": "tune"`. Read the "test split" numbers afterwards so the threshold isn't judged on the questions that chose it.
 
-`data/index.gemini.db` is git-ignored. On Vercel you would set the same variables in the project settings and ship the built index.
+`data/index.gemini.db` is git-ignored. On Vercel you would set the same variables in the project settings. The index is not in git, so build it at deploy time with `npm run ingest` (or remove the ignore rule and commit it) or the route fails on every request.
 
 Other commands:
 
