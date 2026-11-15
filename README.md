@@ -47,6 +47,13 @@ flowchart LR
 
 The model key stays on the server in `.env.local`, which git ignores. The browser never sees it.
 
+## Diagrams
+
+- [Architecture](docs/diagrams/architecture.md): components and what calls what.
+- [Ingest flow](docs/diagrams/ingest-flow.md): load, chunk, embed, store.
+- [Ask flow](docs/diagrams/ask-flow.md): retrieve, score threshold, answer with citations or refuse.
+- [Data model](docs/diagrams/data-model.md): the tables in the index file.
+
 ## The documents
 
 The corpus is 12 pages of the [GSA-TTS handbook](https://github.com/GSA-TTS/handbook): leave, FMLA, paid parental leave, overtime, logging in, PIV cards, equipment, Google Drive, privacy and a few more.
