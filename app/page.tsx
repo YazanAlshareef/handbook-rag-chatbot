@@ -10,7 +10,7 @@ const SUGGESTIONS = [
   "How many hours of advanced sick leave can I request?",
   "How often must I change my ENT password?",
   "Who can earn credit hours?",
-  "What is the parking policy at GSA buildings?",
+  "What is the capital of France?",
 ];
 
 export default function Page() {
