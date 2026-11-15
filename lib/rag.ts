@@ -26,7 +26,8 @@ export function indexPath(name: ProviderName): string {
 }
 
 export function citedPassages(text: string, passages: Citation[]): Citation[] {
-  const used = new Set([...text.matchAll(/\[(\d+)\]/g)].map((m) => Number(m[1])));
+  // accepts "[2]" and "[1, 2]"; shortcut: no "[1-2]" ranges
+  const used = new Set([...text.matchAll(/\[(\d+(?:\s*,\s*\d+)*)\]/g)].flatMap((m) => m[1].split(",").map(Number)));
   return passages.filter((c) => used.has(c.n));
 }
 
