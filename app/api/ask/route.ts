@@ -31,8 +31,6 @@ export async function POST(req: Request) {
       "Retry-After": String(limit.retryAfterSec),
     });
 
-  if (!dailyCap(dailyLimit())) return json({ error: "Daily question limit reached. Try again tomorrow." }, 429, { "Retry-After": "3600" });
-
   // reject oversized bodies: check the declared size, then count bytes while reading
   const declared = Number(req.headers.get("content-length") ?? 0);
   if (declared > MAX_BODY_BYTES) return json({ error: "Request too large." }, 413);
@@ -49,6 +47,9 @@ export async function POST(req: Request) {
   const q = question.trim();
   if (q.length < MIN_QUESTION_CHARS || q.length > MAX_QUESTION_CHARS)
     return json({ error: `Question must be ${MIN_QUESTION_CHARS}-${MAX_QUESTION_CHARS} characters.` }, 400);
+
+  // counted here, after validation, so malformed requests do not use up the model budget
+  if (!dailyCap(dailyLimit())) return json({ error: "Daily question limit reached. Try again tomorrow." }, 429, { "Retry-After": "3600" });
 
   try {
     const { provider, db } = getEngine();
