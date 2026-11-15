@@ -79,14 +79,17 @@ function geminiProvider(): Provider {
   };
 }
 
-async function withRetry<T>(fn: () => Promise<T>, tries = 3): Promise<T> {
+// Retry rate limits (429), server errors (5xx) and errors with no HTTP status (timeout, dropped
+// connection). Other 4xx errors (bad key, bad request) will not change on a second try.
+export async function withRetry<T>(fn: () => Promise<T>, tries = 3, baseDelayMs = 1000): Promise<T> {
   for (let i = 1; ; i++) {
     try {
       return await fn();
     } catch (e) {
       const status = (e as { status?: number }).status;
-      if (i >= tries || (status !== 429 && (status ?? 0) < 500)) throw e;
-      await new Promise((r) => setTimeout(r, 1000 * 2 ** i));
+      const retryable = status === undefined || status === 429 || status >= 500;
+      if (i >= tries || !retryable) throw e;
+      await new Promise((r) => setTimeout(r, baseDelayMs * 2 ** i));
     }
   }
 }
