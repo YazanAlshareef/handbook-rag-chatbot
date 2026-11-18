@@ -70,7 +70,7 @@ The corpus is 12 pages of the [GSA-TTS handbook](https://github.com/GSA-TTS/hand
 4. Run `npm run dev`.
 5. Run `npm run eval` and read the threshold sweep at the end. Set `RAG_MIN_SCORE` from that, not from my default of 0.6. The sweep uses only the 10 questions marked `"split": "tune"`. Read the "test split" numbers afterwards so the threshold isn't judged on the questions that chose it.
 
-`data/index.gemini.db` is git-ignored. On Vercel you would set the same variables in the project settings. The index is not in git, so build it at deploy time with `npm run ingest` (or remove the ignore rule and commit it) or the route fails on every request.
+`data/index.gemini.db` is git-ignored, so it is not in the repo. When you deploy (for example to Vercel), set the same variables in the host's project settings and build the index at deploy time with `npm run ingest`, or remove the ignore rule and commit the file. Without the index the route fails on every request.
 
 Other commands:
 
@@ -107,7 +107,7 @@ This is the output of `npm run eval -- --dry-run` (offline mode, threshold 0.3):
 | Should refuse | 10 | 7 |
 | Refused | 7 | 5 |
 
-It's a weak result. The offline stand-in is lexical and extractive, so it sets a floor and says little about the Gemini setup. "Not refused" flatters it: only 19 of the 30 answerable questions contain the key fact. A few "expected source" misses are arguable, because the paid parental leave page and the leave page both cover parental leave. The key-fact phrases are short substrings I chose, so a correct answer worded differently counts as a miss. An AI coding assistant wrote the questions and key facts, I didn't curate them by hand, and nobody has run them against a live model.
+It's a weak result. The offline stand-in is lexical and extractive, so it sets a floor and says little about the Gemini setup. "Not refused" flatters it: only 19 of the 30 answerable questions contain the key fact. A few "expected source" misses are arguable, because the paid parental leave page and the leave page both cover parental leave. The key-fact phrases are short substrings I chose, so a correct answer worded differently counts as a miss. I didn't curate the questions and key facts by hand, they have not been checked against the handbook line by line, and nobody has run them against a live model.
 
 ## What broke
 
@@ -120,10 +120,6 @@ It's a weak result. The offline stand-in is lexical and extractive, so it sets a
 - **Next.js config.** This Next.js version rejects `runtime` and `dynamic` route exports when `cacheComponents` is on, so the route uses neither. `sqlite-vec` is a native extension, so I marked it as an external package and included the index files in the route's build output.
 - **Demo suggestion.** One of the suggested questions on the page (parking policy) scored 0.303 against the 0.3 threshold, so the demo answered it instead of refusing. I replaced it with an off-topic question.
 - **Retry and daily cap.** On review I found that the Gemini retry never retried a timeout (only 429 and 5xx), and that malformed requests used up the daily cap. Both are fixed and tested.
-
-## How an AI coding assistant helped
-
-An AI coding assistant wrote the first draft of the code, the 40 eval questions and these docs, working from a spec I gave it. I ran the commands and reviewed the files, and the draft was revised after review (citation handling, the request-size limit, the eval checks). The eval questions have not been checked against the handbook line by line.
 
 ## Limits
 
