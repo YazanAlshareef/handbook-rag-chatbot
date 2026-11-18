@@ -42,5 +42,6 @@ test("citedPassages keeps only passages with a valid [n] marker", () => {
   const c = (n: number) => ({ n, docId: "d", docTitle: "t", section: "s", text: "x", score: 1 });
   const all = [c(1), c(2), c(3)];
   assert.deepEqual(citedPassages("Yes [2] and [9].", all).map((p) => p.n), [2]);
+  assert.deepEqual(citedPassages("Both [1, 3] apply.", all).map((p) => p.n), [1, 3]);
   assert.deepEqual(citedPassages("No markers here.", all), []);
 });
